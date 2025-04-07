@@ -1,0 +1,397 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+.Sidebar li{
+  background-color: lightgray;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.Character {
+  position: relative; /* Allows absolute positioning inside */
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  background-color: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.Character img {
+  width: 30%;
+  height: auto;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.DeleteButton {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 15%;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 14px;
+}
+
+.DeleteButton:hover {
+  background-color: darkred;
+}
+
+.UpdateButton{
+  position: absolute;
+  top: 40px;
+  right: 5px;
+  background-color: gray;
+  color: white;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 15%;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 14px;
+}
+
+.DialogueOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.DialogueBox {
+  background: #8C9E66;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+.DialogueBox h2 {
+  margin-bottom: 12px;
+}
+
+.DialogueBox p {
+  margin-bottom: 12px;
+}
+
+.DialogueInput {
+  background: white;
+  color: black;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.DialogueActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.CancelButton,
+.ConfirmDeleteButton {
+  flex: 1;
+  background: gray;
+  color: white;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.ConfirmDeleteButton:disabled {
+  background: lightgray;
+  color: darkgray;
+  cursor: not-allowed;
+}
+
+.Intro{
+  font-size: 32px;
+}
+
+.FilterSortContainer {
+  display: flex;
+  gap: 10px; /* Adds spacing between elements */
+  margin-bottom: 15px;
+}
+
+.FilterSortContainer select,
+.FilterSortContainer button {
+  padding: 8px 12px;
+  border: 1px solid #0B7A98;
+  border-radius: 5px;
+  background: white;
+  color: #0B7A98;
+  cursor: pointer;
+}
+
+.FilterSortContainer button {
+  background: #0B7A98;
+  color: white;
+}
+
+.FilterSortContainer select:focus,
+.FilterSortContainer button:hover {
+  border-color: #065A72;
+}
+
+.MainBox{
+  background: #8C9E66;
+  border-radius: 10px;
+  height: 713px
+}
+
+.Add {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin: auto;
+  padding: 20px;
+  
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  color: black;
+}
+
+.TextField, .DropDown, input[type="file"] {
+  background: linear-gradient(to bottom, white, #d3d3d3);
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px;
+  font-size: 16px;
+}
+
+.TextField:focus, .DropDown:focus {
+  outline: none;
+  border-color: #065A72;
+  box-shadow: 0 0 5px #065A72;
+}
+
+.errorField {
+  color: #ff4d4d;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+textarea.TextField {
+  resize: none;
+  height: 100px;
+}
+
+.ConfirmButton{
+  display: block;
+  margin: 20px auto;
+  background-color: #8C9E66;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  text-align: center;
+  margin-top: 50px;
+}
+
+.Error{
+  color: darkred;
+  font-size: 16px;
+  margin-top: 4px;
+  font-weight: bold;
+}
+
+.dialogue {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  width: 300px;
+}
+
+.dialogue p {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.dialogue button {
+  background: #8C9E66;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.dialogue button:hover {
+  background: #8C9E66;
+}
+
+/* Basic modal styling */
+.UpdateDialogue {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* This centers the modal */
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  width: 800px;
+  justify-content: center;
+  align-items: left;
+  background-color: #8C9E66; /* Background color */
+  z-index: 1000; /* Ensure it's on top of other elements */
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  border-radius: 12px; /* Rounded corners */
+  padding: 20px; /* Optional: Adds padding inside the modal */
+}
+
+/* Content container for the modal */
+.UpdateDialogue .content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Form styling */
+.UpdateDialogue .form-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.UpdateDialogue label {
+  display: inline-block;
+  width: 150px; /* Set label width */
+  font-weight: bold;
+  position: relative;
+  text-align: center;
+}
+
+.UpdateDialogue input,
+.UpdateDialogue textarea {
+  width: calc(100% - 160px); /* Adjust width to accommodate label width */
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff; /* White background for inputs */
+}
+
+/* Make textarea resizable vertically */
+.UpdateDialogue textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Buttons styling */
+.UpdateDialogue .buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.UpdateDialogue button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.UpdateDialogue button:hover {
+  background-color: #0056b3;
+}
+
+/* Close button style */
+.UpdateDialogue .close {
+  background-color: #dc3545;
+}
+
+.UpdateDialogue .close:hover {
+  background-color: #c82333;
+}
+
+.oldest-character {
+  background-color: #FFD700; /* Golden for oldest */
+}
+
+.youngest-character {
+  background-color: #ADD8E6; /* Light blue for youngest */
+}
+
+.average-age-character {
+  background-color: #90EE90; /* Light green for average */
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px; /* Adds space between the buttons */
+}
+
+.pagination-controls button {
+  padding: 5px 15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.pagination-controls button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination-controls span {
+  font-size: 16px;
+  font-weight: bold;
+}

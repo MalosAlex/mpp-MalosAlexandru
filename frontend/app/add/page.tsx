@@ -1,0 +1,220 @@
+"use client";
+import React,{ useEffect, useState } from "react";
+import { useCharacters } from "../types/character";
+import { useRouter } from "next/navigation";
+
+export default function Home() {
+  const { characters, addCharacter } = useCharacters();
+  const router = useRouter();
+
+  const [name, setName] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [media, setMedia] = useState("");
+  const [mediaError, setMediaError] = useState("");
+  const [age, setAge] = useState("");
+  const [ageError, setAgeError] = useState("");
+  const [backstory, setStory] = useState("");
+  const [storyError, setStoryError] = useState("");
+  const [mediaType, setMediaType] = useState("");
+  const [characterType, setCharType] = useState("");
+  const [image, setImage] = useState("");
+  const [dialogueOpen, setDialogueOpen] = useState(false);
+  const [wasSuccessful, setWasSuccessful] = useState(false);
+
+
+  /*
+  const validateName = () => {
+    if (!name) {
+      setNameError("Name cannot be empty");
+    } else {
+      setNameError("");
+    }
+  };
+
+  const validateMedia = () => {
+    if (!media) {
+      setMediaError("Media or origin cannot be empty");
+    } else {
+      setMediaError("");
+    }
+  };
+
+  const validateAge = () => {
+    if (!age) {
+      setAgeError("Age cannot be empty");
+    } else if (isNaN(Number(age))) {
+      setAgeError("Age must be a number");
+    } else {
+      setAgeError("");
+    }
+  };
+
+  const validateStory = () => {
+    if (!backstory) {
+      setStoryError("Backstory cannot be empty");
+    } else {
+      setStoryError("");
+    }
+  };
+  */
+
+  const handleSubmit = async () => {
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("mediaOfOrigin", media);
+    formData.append("age", String(age));
+    formData.append("typeOfMedia", mediaType);
+    formData.append("typeOfCharacter", characterType);
+    formData.append("backstory", backstory);
+  
+    const imageInput = document.getElementById("image") as HTMLInputElement | null;
+    if (imageInput?.files?.[0]) {
+      formData.append("image", imageInput.files[0]);
+    }
+  
+    
+      const response = await fetch("http://localhost:8000/api/characters/", {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        const errors = await response.json();
+      
+        // Clear previous errors
+        setNameError("");
+        setMediaError("");
+        setAgeError("");
+        setStoryError("");
+      
+        if (errors.name) setNameError(errors.name[0]);
+        if (errors.mediaOfOrigin) setMediaError(errors.mediaOfOrigin[0]);
+        if (errors.age) setAgeError(errors.age[0]);
+        if (errors.backstory) setStoryError(errors.backstory[0]);
+        if (errors.image) alert("Image error: " + errors.image[0]);
+      
+        setWasSuccessful(false); 
+        setDialogueOpen(true);
+        return;
+      }
+      
+      // Success
+      await response.json();
+      setWasSuccessful(true); 
+      setDialogueOpen(true);
+      
+    
+  };
+  
+  
+  return (
+    <div>
+      <div className="Add">
+        <label htmlFor="name">
+          Name:
+          <input 
+            type="text" 
+            id="name" 
+            onChange={(e) => setName(e.target.value)} 
+            className="TextField" 
+          />
+          {nameError && <p className="Error">{nameError}</p>}
+        </label>
+  
+        <label htmlFor="media">
+          Media of Origin:
+          <input 
+            type="text" 
+            id="media" 
+            onChange={(e) => setMedia(e.target.value)} 
+            className="TextField" 
+          />
+          {mediaError && <p className="Error">{mediaError}</p>}
+        </label>
+  
+        <label htmlFor="age">
+          Age:
+          <input 
+            type="text" 
+            id="age" 
+            onChange={(e) => setAge(e.target.value)} 
+            className="TextField" 
+          />
+          {ageError && <p className="Error">{ageError}</p>}
+        </label>
+  
+        <label htmlFor="mediaType">
+          Type of Media:
+          <select 
+            id="mediaType" 
+            value={mediaType} 
+            onChange={(e) => setMediaType(e.target.value)} 
+            className="DropDown"
+          >
+            <option value="">Select Media Type</option>
+            <option value="Video Game">Video Game</option>
+            <option value="Movie">Movie</option>
+            <option value="Books">Book</option>
+            <option value="Series">Series</option>
+          </select>
+        </label>
+  
+        <label htmlFor="characterType">
+          Type of Character:
+          <select 
+            id="characterType" 
+            value={characterType} 
+            onChange={(e) => setCharType(e.target.value)} 
+            className="DropDown"
+          >
+            <option value="">Select Character Type</option>
+            <option value="Protagonist">Protagonist</option>
+            <option value="Antagonist">Antagonist</option>
+            <option value="Deuteragonist">Deuteragonist</option>
+            <option value="Confidant">Confidant</option>
+            <option value="Love Option">Love Option</option>
+          </select>
+        </label>
+  
+        <label htmlFor="backstory">
+          Backstory:
+          <textarea 
+            id="backstory" 
+            className="TextField" 
+            onChange={(e) => setStory(e.target.value)} 
+          />
+          {storyError && <p className="Error">{storyError}</p>}
+        </label>
+  
+        <label htmlFor="image">
+          Image:
+          <input 
+            type="file" 
+            id="image" 
+            accept="image/*" 
+            onChange={(e) => setImage(e.target.files ? e.target.files[0].name : "")} 
+          />
+        </label>
+      </div>
+  
+      <button className="ConfirmButton" onClick={handleSubmit}>Confirm</button>
+  
+      {dialogueOpen && (
+        <div className="dialogue">
+          <p>{wasSuccessful ? "Character added successfully!" : "Character not added. Check the fields."}</p>
+          <button onClick={() => {
+            setDialogueOpen(false);
+            if (wasSuccessful) router.push("../select");
+          }}>
+            OK
+          </button>
+        </div>
+      )}
+    </div>
+  );
+  
+  
+
+
+  
+}
