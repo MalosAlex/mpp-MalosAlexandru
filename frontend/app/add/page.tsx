@@ -1,6 +1,6 @@
 "use client";
 import React,{ useEffect, useState } from "react";
-import { useCharacters } from "../types/character";
+import { useCharacters, Character } from "../types/character";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
@@ -20,6 +20,28 @@ export default function Home() {
   const [image, setImage] = useState("");
   const [dialogueOpen, setDialogueOpen] = useState(false);
   const [wasSuccessful, setWasSuccessful] = useState(false);
+
+  const [serverOnline, setServerOnline] = useState<boolean | null>(null);
+    const [userIsOnline, setUserIsOnline] = useState(navigator.onLine);
+  
+    // Combined value
+    const isOnline = userIsOnline && serverOnline === true;
+    
+    const checkOnlineStatus = async () => {
+      setUserIsOnline(navigator.onLine);
+      try {
+        const res = await fetch("http://localhost:8000/api/characters/");
+        setServerOnline(res.ok);
+      } catch {
+        setServerOnline(false);
+      }
+    };
+    
+    useEffect(() => {
+      checkOnlineStatus();
+      const intervalId = setInterval(checkOnlineStatus, 1000);
+      return () => clearInterval(intervalId);
+    }, []);
 
 
   /*
@@ -59,40 +81,44 @@ export default function Home() {
   */
 
   const handleSubmit = async () => {
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("mediaOfOrigin", media);
-    formData.append("age", String(age));
-    formData.append("typeOfMedia", mediaType);
-    formData.append("typeOfCharacter", characterType);
-    formData.append("backstory", backstory);
-  
-    const imageInput = document.getElementById("image") as HTMLInputElement | null;
-    if (imageInput?.files?.[0]) {
-      formData.append("image", imageInput.files[0]);
-    }
-  
-    
+    const onlineStatus = userIsOnline && serverOnline;
+    if(onlineStatus)
+    {
+
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("mediaOfOrigin", media);
+      formData.append("age", String(age));
+      formData.append("typeOfMedia", mediaType);
+      formData.append("typeOfCharacter", characterType);
+      formData.append("backstory", backstory);
+      
+      const imageInput = document.getElementById("image") as HTMLInputElement | null;
+      if (imageInput?.files?.[0]) {
+        formData.append("image", imageInput.files[0]);
+      }
+      
+      
       const response = await fetch("http://localhost:8000/api/characters/", {
         method: "POST",
         body: formData,
       });
-  
+      
       if (!response.ok) {
         const errors = await response.json();
-      
+        
         // Clear previous errors
         setNameError("");
         setMediaError("");
         setAgeError("");
         setStoryError("");
-      
+        
         if (errors.name) setNameError(errors.name[0]);
         if (errors.mediaOfOrigin) setMediaError(errors.mediaOfOrigin[0]);
         if (errors.age) setAgeError(errors.age[0]);
         if (errors.backstory) setStoryError(errors.backstory[0]);
         if (errors.image) alert("Image error: " + errors.image[0]);
-      
+        
         setWasSuccessful(false); 
         setDialogueOpen(true);
         return;
@@ -103,6 +129,22 @@ export default function Home() {
       setWasSuccessful(true); 
       setDialogueOpen(true);
       
+    }
+    else{
+      const newCharacter: Character = {
+        name,
+        mediaOfOrigin: media,
+        age: Number(age),
+        typeOfMedia: mediaType,
+        typeOfCharacter: characterType,
+        backstory,
+        image,
+      };
+    
+      addCharacter(newCharacter);
+      setWasSuccessful(true);
+      setDialogueOpen(true);
+    }
     
   };
   

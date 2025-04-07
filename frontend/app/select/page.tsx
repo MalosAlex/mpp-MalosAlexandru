@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Character } from "../types/character";
+import { Character, useCharacters } from "../types/character";
 import CharacterDialogue from "./deleteDialogue/page";
 import UpdateDialogue from "./UpdateDialogue/page";
 import filterAndSortCharacters from "./utils/filterSort";
@@ -9,6 +9,7 @@ import { debug } from "console";
 
 export default function Home() {
   const [characters, setCharacters] = useState<Character[]>([]);
+  const { characters: contextCharacters, getFromBackend, sync } = useCharacters();
   const [dialogueOpen, setDialogueOpen] = useState(false);
   const [updateDialogueOpen, setUpdateDialogueOpen] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState<any | null>(null);
@@ -16,37 +17,65 @@ export default function Home() {
   const [filter, setFilter] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [serverOnline, setServerOnline] = useState<boolean | null>(null);
+  const [userIsOnline, setUserIsOnline] = useState(navigator.onLine);
 
+  // Combined value
+  const isOnline = userIsOnline && serverOnline === true;
+  
+  const checkOnlineStatus = async () => {
+    setUserIsOnline(navigator.onLine);
+    try {
+      const res = await fetch("http://localhost:8000/api/characters/");
+      setServerOnline(res.ok);
+    } catch {
+      setServerOnline(false);
+    }
+  };
+  
+  useEffect(() => {
+    checkOnlineStatus();
+    const intervalId = setInterval(checkOnlineStatus, 1000);
+    return () => clearInterval(intervalId);
+  }, []);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const charactersPerPage = 4; // Number of characters per page
+  
 
   // Fetch characters from the backend when component mounts or filter/sort changes
   useEffect(() => {
     const fetchCharacters = async () => {
-      try {
-        const filterParam = filter ? `typeOfMedia=${filter}&` : '';
-        const sortByParam = sortBy ? `ordering=${sortBy}` : 'ordering=name';
-        const orderParam = sortOrder ? `&order=${sortOrder}` : '';
-  
-        const url = `http://localhost:8000/api/characters/?${filterParam}${sortByParam}${orderParam}`;
-        console.log(url);
-  
-        const response = await fetch(url);
-        if (response.ok) {
-          const data = await response.json();
-          setCharacters(data);
-        } else {
-          console.error("Error fetching characters:", response.statusText);
+      checkOnlineStatus()
+      const onlineStatus = userIsOnline && serverOnline;
+      if (onlineStatus) {
+        try {
+          const filterParam = filter ? `typeOfMedia=${filter}&` : '';
+          const sortByParam = sortBy ? `ordering=${sortBy}` : 'ordering=name';
+          const orderParam = sortOrder ? `&order=${sortOrder}` : '';
+          
+          const url = `http://localhost:8000/api/characters/?${filterParam}${sortByParam}${orderParam}`;
+          const response = await fetch(url);
+          if (response.ok) {
+            const data = await response.json();
+            setCharacters(data);
+            getFromBackend(data);
+          } else {
+            console.error("Error fetching characters:", response.statusText);
+          }
+        } catch (error) {
+          console.error("Error fetching characters:", error);
         }
-      } catch (error) {
-        console.error("Error fetching characters:", error);
+      } else {
+        setCharacters(contextCharacters); // Use the local cached characters
+        console.log(characters)
       }
     };
   
     fetchCharacters();
     setCurrentPage(1); // Reset page when filter/sort changes
-  }, [filter, sortBy, sortOrder]);
+  }, [filter, sortBy, sortOrder, userIsOnline, serverOnline]); // Dependencies updated
+  
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -124,84 +153,87 @@ const handleDeleteCharacter = async () => {
   }
 };
 
-  return (
-    <div ref={scrollContainerRef} className="scroll-container" style={{ overflowY: "auto", height: "100vh" }}>
-      <div className="FilterSortContainer">
-        <select onChange={(e) => setFilter(e.target.value)} defaultValue="">
-          <option value="">All</option>
-          <option value="Video Game">Video Game</option>
-          <option value="Movie">Movie</option>
-          <option value="Books">Books</option>
-          <option value="Series">Series</option>
-        </select>
+return (
+  <>
+    
+      <div ref={scrollContainerRef} className="scroll-container" style={{ overflowY: "auto", height: "100vh" }}>
+        <div className="FilterSortContainer">
+          <select onChange={(e) => setFilter(e.target.value)} defaultValue="">
+            <option value="">All</option>
+            <option value="Video Game">Video Game</option>
+            <option value="Movie">Movie</option>
+            <option value="Books">Books</option>
+            <option value="Series">Series</option>
+          </select>
 
-        <select onChange={(e) => setSortBy(e.target.value)} defaultValue="">
-          <option value="">None</option>
-          <option value="Age">Age</option>
-          <option value="Name">Name</option>
-        </select>
+          <select onChange={(e) => setSortBy(e.target.value)} defaultValue="">
+            <option value="">None</option>
+            <option value="Age">Age</option>
+            <option value="Name">Name</option>
+          </select>
 
-        <button onClick={() => setSortOrder("asc")}>Ascending</button>
-        <button onClick={() => setSortOrder("desc")}>Descending</button>
+          <button onClick={() => setSortOrder("asc")}>Ascending</button>
+          <button onClick={() => setSortOrder("desc")}>Descending</button>
+        </div>
+
+        <ul>
+          {currentCharacters.map((char, index) => (
+            <li key={index} className="Character">
+              <img src={char.image} alt={char.name} />
+              <div className="CharacterDetails">
+                <h2>{char.name}</h2>
+                <p><strong>Media of Origin:</strong> {char.mediaOfOrigin}</p>
+                <p><strong>Age:</strong> {char.age}</p>
+                <p><strong>Type:</strong> {char.typeOfCharacter}</p>
+                <p>{char.backstory}</p>
+                <button 
+                  onClick={() => {
+                    setSelectedCharacterName(char.name);
+                    setSelectedCharacter(char);
+                    setDialogueOpen(true);
+                  }} 
+                  className="DeleteButton"
+                >
+                  Delete
+                </button>
+                <button 
+                  onClick={() => {          
+                    setSelectedCharacterName(char.name);
+                    setSelectedCharacter(char);
+                    setUpdateDialogueOpen(true);
+                  }} 
+                  className="UpdateButton"
+                >
+                  Update
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        {/* Delete Dialogue */}
+        {dialogueOpen && selectedCharacterName && (
+          <CharacterDialogue
+            characterName={selectedCharacterName} 
+            onConfirm={handleDeleteCharacter}
+            onClose={() => setDialogueOpen(false)}
+          />
+        )}
+
+        {/* Update Dialogue */}
+        {updateDialogueOpen && selectedCharacter && (
+          <UpdateDialogue
+            character={selectedCharacter} 
+            onConfirm={handleUpdateCharacter}
+            onClose={() => setUpdateDialogueOpen(false)}
+            onError={(errors) => {
+              console.log(errors);
+            }}
+          />
+        )}
       </div>
+    
+  </>
+);
 
-      <ul>
-        {currentCharacters.map((char, index) => (
-          <li key={index} className="Character">
-            <img src={char.image} alt={char.name} />
-            <div className="CharacterDetails">
-              <h2>{char.name}</h2>
-              <p><strong>Media of Origin:</strong> {char.mediaOfOrigin}</p>
-              <p><strong>Age:</strong> {char.age}</p>
-              <p><strong>Type:</strong> {char.typeOfCharacter}</p>
-              <p>{char.backstory}</p>
-              <button 
-                onClick={() => {
-                  setSelectedCharacterName(char.name);
-                  setSelectedCharacter(char);
-                  setDialogueOpen(true);
-                }} 
-                className="DeleteButton"
-              >
-                Delete
-              </button>
-              <button 
-                onClick={() => {          
-                  setSelectedCharacterName(char.name);
-                  setSelectedCharacter(char);
-                  setUpdateDialogueOpen(true);
-                }} 
-                className="UpdateButton"
-              >
-                Update
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
-
-      {/* Delete Dialogue */}
-      {dialogueOpen && selectedCharacterName && (
-        <CharacterDialogue
-          characterName={selectedCharacterName} 
-          onConfirm={handleDeleteCharacter}
-          onClose={() => setDialogueOpen(false)}
-        />
-      )}
-
-      {/* Update Dialogue */}
-      {updateDialogueOpen && selectedCharacter && (
-        <UpdateDialogue
-          character={selectedCharacter} 
-          onConfirm={handleUpdateCharacter}
-          onClose={() => setUpdateDialogueOpen(false)}
-          onError={(errors) => {
-            // Handle the errors here
-            console.log(errors); // Example, you can handle them however you want
-          }}
-        />
-      )}
-
-    </div>
-  );
 }
