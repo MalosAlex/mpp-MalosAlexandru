@@ -93,10 +93,12 @@ export default function Home() {
       formData.append("typeOfCharacter", characterType);
       formData.append("backstory", backstory);
       
+      
       const imageInput = document.getElementById("image") as HTMLInputElement | null;
       if (imageInput?.files?.[0]) {
         formData.append("image", imageInput.files[0]);
       }
+
       
       
       const response = await fetch("http://localhost:8000/api/characters/", {
@@ -131,6 +133,7 @@ export default function Home() {
       
     }
     else{
+      const updatedImage = "images/" + image;
       const newCharacter: Character = {
         name,
         mediaOfOrigin: media,
@@ -138,8 +141,10 @@ export default function Home() {
         typeOfMedia: mediaType,
         typeOfCharacter: characterType,
         backstory,
-        image,
+        image: updatedImage,
       };
+
+      console.log(image)
     
       addCharacter(newCharacter);
       setWasSuccessful(true);

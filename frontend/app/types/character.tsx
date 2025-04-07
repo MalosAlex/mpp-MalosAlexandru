@@ -62,49 +62,108 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     // Sync the added characters
     for (const character of addedCharacters) {
       try {
-        await fetch("http://localhost:8000/api/characters/", {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(character),
+        // Get all characters first to check existence
+        const allCharsResponse = await fetch(`http://localhost:8000/api/characters/`);
+        const allCharacters = await allCharsResponse.json();
+        console.log("All characters:", allCharacters);
+        console.log("Trying to add:", character.name);
+        
+        // Check if this character exists
+        const exists = allCharacters.some(
+          (char: Character) => char.name.toLowerCase() === character.name.toLowerCase()
+        );
+        
+        if (exists) {
+          console.log(`Character ${character.name} already exists, skipping...`);
+          continue;
+        }
+        
+        
+        // Now proceed with creating the character
+        const formData = new FormData();
+        formData.append("name", character.name);
+        formData.append("mediaOfOrigin", character.mediaOfOrigin);
+        formData.append("age", String(character.age));
+        formData.append("typeOfMedia", character.typeOfMedia);
+        formData.append("typeOfCharacter", character.typeOfCharacter);
+        formData.append("backstory", character.backstory);
+        
+        // Handle image upload
+        if (typeof character.image === "string") {
+          if (character.image.startsWith("/images/") || character.image.startsWith("images/")) {
+            try {
+              const imageResponse = await fetch(character.image);
+              const imageBlob = await imageResponse.blob();
+              const filename = character.image.split('/').pop() || 'image.jpg';
+              const imageFile = new File([imageBlob], filename, { 
+                type: imageBlob.type 
+              });
+              formData.append("image", imageFile);
+            } catch (error) {
+              console.error("Error fetching image file:", error);
+            }
+          }
+        }
+        
+        const response = await fetch("http://localhost:8000/api/characters/", {
+          method: "POST",
+          body: formData,
         });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Failed to add character. Status:", response.status, errorText);
+        }
       } catch (error) {
-        console.error("Error adding character:", error);
+        console.error("Error processing character:", error);
       }
     }
 
+    function isFile(value: any): value is File {
+      return value instanceof File;
+    }
+  
     // Sync the updated characters
     for (const updatedCharacter of updatedCharacters) {
       try {
-        await fetch(`http://localhost:8000/api/characters/${updatedCharacter.name}`, {
+        const response = await fetch(`http://localhost:8000/api/characters/${updatedCharacter.name}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(updatedCharacter),
         });
+  
+        if (!response.ok) {
+          console.error("Failed to update character. Status:", response.status, await response.text());
+        }
       } catch (error) {
         console.error("Error updating character:", error);
       }
     }
-
+  
     // Sync the deleted characters
     for (const name of deletedCharacters) {
       try {
-        await fetch(`http://localhost:8000/api/characters/${name}/`, {
+        const response = await fetch(`http://localhost:8000/api/characters/${name}/`, {
           method: 'DELETE',
         });
+  
+        if (!response.ok) {
+          console.error("Failed to delete character. Status:", response.status, await response.text());
+        }
       } catch (error) {
         console.error("Error deleting character:", error);
       }
     }
-
+  
     // Clear the operation logs after sync
     setAddedCharacters([]);
     setUpdatedCharacters([]);
     setDeletedCharacters([]);
   };
+  
+  
 
   return (
     <CharacterContext.Provider value={{ characters, addCharacter, removeCharacter, updateCharacter, getFromBackend, sync }}>

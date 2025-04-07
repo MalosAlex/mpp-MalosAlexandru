@@ -21,7 +21,7 @@ export default function Home() {
   const [userIsOnline, setUserIsOnline] = useState(navigator.onLine);
 
   // Combined value
-  const isOnline = userIsOnline && serverOnline === true;
+  const [isOnline, setIsOnline] = useState<boolean>(userIsOnline && serverOnline === true);
   
   const checkOnlineStatus = async () => {
     setUserIsOnline(navigator.onLine);
@@ -32,15 +32,24 @@ export default function Home() {
       setServerOnline(false);
     }
   };
-  
   useEffect(() => {
+  
     checkOnlineStatus();
+  
+    if (userIsOnline && serverOnline === true && !isOnline) {
+      setIsOnline(true);
+      sync();
+    }
+  
     const intervalId = setInterval(checkOnlineStatus, 1000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [userIsOnline, serverOnline, isOnline]);
+
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const charactersPerPage = 4; // Number of characters per page
+  console.log
   
 
   // Fetch characters from the backend when component mounts or filter/sort changes
