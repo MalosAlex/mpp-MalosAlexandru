@@ -44,15 +44,21 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
   const updateCharacter = (updatedCharacter: Character) => {
     setCharacters((prev) =>
       prev.map((char) =>
-        char.name === updatedCharacter.name ? { ...char, ...updatedCharacter } : char
+        char.name === updatedCharacter.name
+          ? {
+              ...char,
+              ...updatedCharacter,
+              image: updatedCharacter.image === "nothing" ? char.image : updatedCharacter.image,
+            }
+          : char
       )
     );
-    setUpdatedCharacters((prev) =>
-      prev.map((char) =>
-        char.name === updatedCharacter.name ? { ...char, ...updatedCharacter } : char
-      )
-    );
+    setUpdatedCharacters((prev) => [...prev, updatedCharacter])
+    console.log("omgg")
+    console.log(updatedCharacter)
+    console.log(updatedCharacters)
   };
+  
 
   const getFromBackend = (data: Character[]) => {
     setCharacters(data);
@@ -66,6 +72,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
         const allCharsResponse = await fetch(`http://localhost:8000/api/characters/`);
         const allCharacters = await allCharsResponse.json();
         console.log("All characters:", allCharacters);
+        console.log("All added before:", addedCharacters);
         console.log("Trying to add:", character.name);
         
         // Check if this character exists
@@ -87,9 +94,12 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
         formData.append("typeOfMedia", character.typeOfMedia);
         formData.append("typeOfCharacter", character.typeOfCharacter);
         formData.append("backstory", character.backstory);
-        
+        formData.append("image", character.image);
+
+        console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        console.log(character.image);
         // Handle image upload
-        if (typeof character.image === "string") {
+        /*if (typeof character.image === "string") {
           if (character.image.startsWith("/images/") || character.image.startsWith("images/")) {
             try {
               const imageResponse = await fetch(character.image);
@@ -103,13 +113,13 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
               console.error("Error fetching image file:", error);
             }
           }
-        }
+        }*/
         
         const response = await fetch("http://localhost:8000/api/characters/", {
           method: "POST",
           body: formData,
         });
-        
+        console.log(response);
         if (!response.ok) {
           const errorText = await response.text();
           console.error("Failed to add character. Status:", response.status, errorText);
@@ -125,8 +135,9 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
   
     // Sync the updated characters
     for (const updatedCharacter of updatedCharacters) {
+      console.log("helobaby")
       try {
-        const response = await fetch(`http://localhost:8000/api/characters/${updatedCharacter.name}`, {
+        const response = await fetch(`http://localhost:8000/api/characters/${updatedCharacter.name}/`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -157,10 +168,6 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
       }
     }
   
-    // Clear the operation logs after sync
-    setAddedCharacters([]);
-    setUpdatedCharacters([]);
-    setDeletedCharacters([]);
   };
   
   

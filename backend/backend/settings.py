@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024  # 1GB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024  # 1GB
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,6 +29,9 @@ SECRET_KEY = 'django-insecure-x-$50&e)b4$3gh^=p9cq1+x@)-@^gvr5-p20u-pgx4rc(+%$gz
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 ALLOWED_HOSTS = []
 
 
@@ -32,6 +39,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'corsheaders',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -54,6 +62,17 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],  # Redis server address (localhost, port 6379)
+        },
+    },
+}
+
+ASGI_APPLICATION = 'backend.asgi.application'
 CORS_ALLOW_ALL_ORIGINS = True 
 
 ROOT_URLCONF = 'backend.urls'

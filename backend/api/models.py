@@ -8,7 +8,14 @@ class Character(models.Model):
     typeOfMedia = models.CharField(max_length=100)
     typeOfCharacter = models.CharField(max_length=100)
     backstory = models.TextField(default="No backstory provided")
-    image = models.ImageField(upload_to='images/')
+    image = models.CharField(max_length=200)
 
     def __str__(self):
         return self.name
+
+class Video(models.Model):
+    title = models.CharField(max_length=200)
+    file = models.FileField(upload_to='videos/')  # This will store the file in the "media/videos" directory
+
+    def __str__(self):
+        return self.title

@@ -1,32 +1,63 @@
 "use client";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Character } from "../types/character";
+import { Character,useCharacters } from "../types/character";
 import React, { useState, useEffect } from "react";
 
 
 export default function AgeChart() {
     const [characters, setCharacters] = useState<Character[]>([]);
 
-    useEffect(() => {
-        const fetchCharacters = async () => {
-          try {
-            const url = `http://localhost:8000/api/characters/`;
-            console.log(url); // For debugging the URL
-    
-            const response = await fetch(url);
-            if (response.ok) {
-              const data = await response.json();
-              setCharacters(data);
-            } else {
-              console.error("Error fetching characters:", response.statusText);
+    const { characters: contextCharacters} = useCharacters();
+        
+        const [serverOnline, setServerOnline] = useState<boolean | null>(null);
+        const [userIsOnline, setUserIsOnline] = useState(navigator.onLine);
+          
+            // Combined value
+            const isOnline = userIsOnline && serverOnline === true;
+            
+            const checkOnlineStatus = async () => {
+              setUserIsOnline(navigator.onLine);
+              try {
+                const res = await fetch("http://localhost:8000/api/characters/");
+                setServerOnline(res.ok);
+              } catch {
+                setServerOnline(false);
+              }
+            };
+            
+            useEffect(() => {
+              checkOnlineStatus();
+              const intervalId = setInterval(checkOnlineStatus, 1000);
+              return () => clearInterval(intervalId);
+            }, []);
+        
+        useEffect(() => {
+            const fetchCharacters = async () => {
+              const onlineStatus = userIsOnline && serverOnline;
+              if(onlineStatus)
+              {
+              try {
+                const url = `http://localhost:8000/api/characters/`;
+                console.log(url); // For debugging the URL
+        
+                const response = await fetch(url);
+                if (response.ok) {
+                  const data = await response.json();
+                  setCharacters(data);
+                } else {
+                  console.error("Error fetching characters:", response.statusText);
+                }
+              } catch (error) {
+                console.error("Error fetching characters:", error);
+              }
             }
-          } catch (error) {
-            console.error("Error fetching characters:", error);
-          }
-        };
-        fetchCharacters();
-      }) ;
+            else{
+              setCharacters(contextCharacters);
+            }
+            };
+            fetchCharacters();
+          }) ;
     
     const ageGroups: Record<"<20" | "20-29" | "30-39" | "40-49" | "50+", number> = {
         "<20": 0,

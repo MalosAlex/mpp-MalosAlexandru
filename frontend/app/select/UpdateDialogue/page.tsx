@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useCharacters, Character } from "../../types/character"
 
 interface UpdateDialogueProps {
   character: any;
@@ -9,6 +10,7 @@ interface UpdateDialogueProps {
 }
 
 const UpdateDialogue = ({ character, onConfirm, onClose, onError }: UpdateDialogueProps) => {
+  const { characters, updateCharacter } = useCharacters();
   const [name, setName] = useState(character.name);
   const [mediaOfOrigin, setMediaOfOrigin] = useState(character.mediaOfOrigin);
   const [age, setAge] = useState(character.age.toString());
@@ -16,6 +18,28 @@ const UpdateDialogue = ({ character, onConfirm, onClose, onError }: UpdateDialog
   const [typeOfCharacter, setTypeOfCharacter] = useState(character.typeOfCharacter);
   const [backstory, setBackstory] = useState(character.backstory);
   const [image, setImage] = useState(""); // For image updates if needed
+
+  const [serverOnline, setServerOnline] = useState<boolean | null>(null);
+      const [userIsOnline, setUserIsOnline] = useState(navigator.onLine);
+    
+      // Combined value
+      const isOnline = userIsOnline && serverOnline === true;
+      
+      const checkOnlineStatus = async () => {
+        setUserIsOnline(navigator.onLine);
+        try {
+          const res = await fetch("http://localhost:8000/api/characters/");
+          setServerOnline(res.ok);
+        } catch {
+          setServerOnline(false);
+        }
+      };
+      
+      useEffect(() => {
+        checkOnlineStatus();
+        const intervalId = setInterval(checkOnlineStatus, 1000);
+        return () => clearInterval(intervalId);
+      }, []);
   
   const [errors, setErrors] = useState({
     name: "",
@@ -45,6 +69,10 @@ const UpdateDialogue = ({ character, onConfirm, onClose, onError }: UpdateDialog
     });
 
     try {
+      const onlineStatus = userIsOnline && serverOnline;
+    if(onlineStatus)
+    {
+
       // Create form data similar to add function
       const formData = new FormData();
       formData.append("name", name);
@@ -53,20 +81,22 @@ const UpdateDialogue = ({ character, onConfirm, onClose, onError }: UpdateDialog
       formData.append("typeOfMedia", typeOfMedia);
       formData.append("typeOfCharacter", typeOfCharacter);
       formData.append("backstory", backstory);
-
+      
       // Handle image upload if provided
       const imageInput = document.getElementById("update-image") as HTMLInputElement | null;
       if (imageInput?.files?.[0]) {
         formData.append("image", imageInput.files[0]);
       }
 
+      console.log(formData)
+      
       // Send to Django API endpoint - adjust URL to match your backend structure
       // Using the original character name as the identifier based on your viewset
       const response = await fetch(`http://localhost:8000/api/characters/${encodeURIComponent(character.name)}/`, {
         method: "PUT", // Or PATCH if you're doing partial updates
         body: formData,
       });
-
+      
       if (!response.ok) {
         const errorData = await response.json();
         
@@ -83,10 +113,25 @@ const UpdateDialogue = ({ character, onConfirm, onClose, onError }: UpdateDialog
         onError(errorData); // Pass full error object up
         return;
       }
-
+      
       // Success - get updated character from response
       const updatedCharacter = await response.json();
       onConfirm(updatedCharacter);
+    }
+    else{
+      console.log("sdsadgsadsadsadsa")
+      const updatedCharacter: Character = {
+              name,
+              mediaOfOrigin: mediaOfOrigin,
+              age: Number(age),
+              typeOfMedia: typeOfMedia,
+              typeOfCharacter: typeOfCharacter,
+              backstory,
+              image: "nothing",
+            };
+      console.log(updatedCharacter)
+      updateCharacter(updatedCharacter);
+    }
     } catch (error) {
       console.error("Update failed:", error);
       // Handle unexpected errors

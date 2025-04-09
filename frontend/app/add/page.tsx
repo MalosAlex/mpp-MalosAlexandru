@@ -92,12 +92,13 @@ export default function Home() {
       formData.append("typeOfMedia", mediaType);
       formData.append("typeOfCharacter", characterType);
       formData.append("backstory", backstory);
+      formData.append("image", "images/" + image);
       
-      
+      /*
       const imageInput = document.getElementById("image") as HTMLInputElement | null;
       if (imageInput?.files?.[0]) {
         formData.append("image", imageInput.files[0]);
-      }
+      }*/
 
       
       
@@ -114,6 +115,9 @@ export default function Home() {
         setMediaError("");
         setAgeError("");
         setStoryError("");
+
+        console.log("heloo");
+        console.log(errors);
         
         if (errors.name) setNameError(errors.name[0]);
         if (errors.mediaOfOrigin) setMediaError(errors.mediaOfOrigin[0]);

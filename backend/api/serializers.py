@@ -1,24 +1,22 @@
 from rest_framework import serializers
-from .models import Character
+from .models import Character, Video
+
 
 class CharacterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Character
         fields = '__all__'
 
-    def validate_name(self, value):
-        # Example: Name must not be empty or too short
-        if not value:
-            raise serializers.ValidationError("Name cannot be empty.")
-        if len(value) < 3:
-            raise serializers.ValidationError("Name must be at least 3 characters long.")
-        return value
 
     def validate_age(self, value):
         # Example: Age must be a positive number
         if value <= 0:
             raise serializers.ValidationError("Age must be a positive number.")
         return value
+    
+    def create(self, validated_data):
+        # No database operation, just return a new instance
+        return Character(**validated_data)
 
     def validate_mediaOfOrigin(self, value):
         # Example: MediaOfOrigin should not be empty
@@ -29,3 +27,8 @@ class CharacterSerializer(serializers.ModelSerializer):
     def validate(self, data):
         # Add general validation rules if needed
         return data
+    
+class VideoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Video
+        fields = ['id', 'title', 'file']
