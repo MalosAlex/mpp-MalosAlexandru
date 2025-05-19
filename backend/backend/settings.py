@@ -33,7 +33,7 @@ DEBUG = False
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-ALLOWED_HOSTS = ['mpp-backend.onrender.com']
+ALLOWED_HOSTS = ['mpp-backend.onrender.com', '127.0.0.1', 'localhost']
 
 
 # Application definition
