@@ -1,46 +1,55 @@
 from rest_framework import viewsets, status
+from django.db.models import Avg
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django_filters import rest_framework as filters
 from django.http import FileResponse
+from rest_framework.generics import ListAPIView
+from django.shortcuts import get_object_or_404
 from rest_framework import status, generics
-from .models import Character
-from .serializers import CharacterSerializer
+from .models import Character, Media, User, LogTable, MonitoredUsers
+from .serializers import CharacterSerializer, LogTableSerializer, MonitoredUsersSerializer
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework import serializers
 from .models import Video
 from .serializers import VideoSerializer
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.pagination import PageNumberPagination
 import mimetypes
 import os
 
-mock_characters = []
+#parola1808
 
-mock_characters.clear()
-mock_characters = [
-    Character(name="Cloud Strife", mediaOfOrigin="Final Fantasy VII", age=21, typeOfMedia="Video Game", 
-            typeOfCharacter="Protagonist", backstory="The main character of all of the ff7 games, along the story we experience Cloud's identity crisis which is also the main theme of the games", 
-            image="images/cloud.png"),
-    
-    Character(name="Tifa Lockhart", mediaOfOrigin="Final Fantasy VII", age=20, typeOfMedia="Video Game", 
-            typeOfCharacter="Confidant", backstory="Tifa is considered to be the most important character in the game as she holds the team together, by helping Cloud remain sane and find himself again.", 
-            image="images/tifa.png"),
+def getMedia(mediaId):
+        try:
+            media = Media.objects.get(name=mediaId)
+            return media
+        except Media.DoesNotExist:
+            return None
+        
+def getUser(userName):
+    try:
+        user = User.objects.get(username = userName)
+        return user
+    except User.DoesNotExist:
+        return None
+        
+class AgeByMediaSerializer(serializers.Serializer):
+    media_type = serializers.CharField(source='media__typeOfMedia')
+    avg_age = serializers.FloatField()
 
-    Character(name="Sephiroth", mediaOfOrigin="Final Fantasy VII", age=27, typeOfMedia="Video Game", 
-            typeOfCharacter="Antagonist", backstory="Considered one of the best villains ever, he is a master at manipulating Cloud and extremely strong. His main goal is to attain godhood by destroying the planet in revenge for his mother.", 
-            image="images/sephiroth.png"),
+class AgeByMediaType(APIView):
+    def get(self, request):
+        data = (
+            Character.objects.values('media__typeOfMedia')
+            .values('media__typeOfMedia')
+            .annotate(avg_age=Avg('age'))
+            .order_by('media__typeOfMedia')
+        )
 
-    Character(name="Lee Chandler", mediaOfOrigin="Manchester by the Sea", age=21, typeOfMedia="Movie", 
-            typeOfCharacter="Protagonist", backstory="The character who the story is revolved around, the story focusing on the grief he faces after an accident cause by him leading to the death of his wife and children.", 
-            image="images/manchester.png"),
-
-    Character(name="Paul Atreides", mediaOfOrigin="Dune", age=25, typeOfMedia="Books", 
-            typeOfCharacter="Protagonist", backstory="The main character of the original series. The action revolves around him taking the planet back from the family that killed his family, while becoming the legendary Lisan al-gaib", 
-            image="images/dune.png"),
-
-    Character(name="Saul Goodman", mediaOfOrigin="Breaking Bad", age=49, typeOfMedia="Series", 
-            typeOfCharacter="Deuteragonist", backstory="The second most important character in the Breaking Bad show, getting his own spin off. He is a man obsessed with being recognised as a real lawyer and being useful through any way.", 
-            image="images/saul.png")
-]
-
+        # Use the serializer to format the data
+        serializer = AgeByMediaSerializer(data, many=True)
+        return Response(serializer.data)
 
 class CharacterViewSet(viewsets.ViewSet):
     serializer_class = CharacterSerializer
@@ -49,12 +58,24 @@ class CharacterViewSet(viewsets.ViewSet):
     ordering = ['name']
 
     def list(self, request):
-        characters = mock_characters
+        characters = Character.objects.all()
+        user = request.query_params.get('user')  # Use query_params for GET parameters
+        filtered_characters = []
+        if user:
+            for character in characters:
+                db_user = getUser(character.user)
+                if db_user and user.lower() in db_user.username.lower():
+                    filtered_characters.append(character)
+            characters = filtered_characters
+
 
         # Manually apply filtering
         typeOfMedia_filter = request.query_params.get('typeOfMedia', None)
-        if typeOfMedia_filter:
-            characters = [character for character in characters if typeOfMedia_filter.lower() in character.typeOfMedia.lower()]
+        if typeOfMedia_filter and user:
+            characters = [
+                character for character in characters
+                if (typeOfMedia_filter.lower() in getMedia(character.media).typeOfMedia.lower())
+            ]
 
         # Apply ordering manually if needed
         ordering = request.query_params.get('ordering', self.ordering[0]).lower()
@@ -67,96 +88,80 @@ class CharacterViewSet(viewsets.ViewSet):
             reverse = order == 'desc'  # If order is 'desc', reverse should be True
             characters = sorted(characters, key=lambda x: getattr(x, ordering), reverse=reverse)
 
+        
+
         # Return filtered and sorted data
         serializer = CharacterSerializer(characters, many=True)
         return Response(serializer.data)
     
     def retrieve(self, request, pk=None):
-        character = next((char for char in mock_characters if char.name == pk), None)
+        character = get_object_or_404(Character, name=pk)
+
         if not character:
             return Response({"detail": "Character not found."}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = CharacterSerializer(character)
         return Response(serializer.data)
     
-    def add_mock_character(self, data):
-        # Create a new Character instance directly instead of using serializer.save()
-        try:
-            new_character = Character(
-                name=data.get('name'),
-                mediaOfOrigin=data.get('mediaOfOrigin'),
-                age=int(data.get('age')),
-                typeOfMedia=data.get('typeOfMedia'),
-                typeOfCharacter=data.get('typeOfCharacter'),
-                backstory=data.get('backstory'),
-                image=data.get('image')
-            )
-            mock_characters.append(new_character)
-            return new_character
-        except Exception as e:
-            print("Error creating character:", e)
-            return None
-
     def create(self, request):
-        # Check if character already exists
-        if any(char.name == request.data.get('name') for char in mock_characters):
-            return Response({"error": "Character with this name already exists"}, 
-                        status=status.HTTP_400_BAD_REQUEST)
+        original_data = request.data
+
+        # Extract the media name and type
+        media_name = original_data.get('mediaOfOrigin')
+        media_type = original_data.get('typeOfMedia')
+        user_name = original_data.get('user')
+
+        # Get the user
+        user = getUser(user_name)
         
-        new_character = self.add_mock_character(request.data)
-        if new_character:
-            # Use serializer only for conversion to JSON, not saving
-            serializer = CharacterSerializer(new_character)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response({"error": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+        LogTable.objects.create(user=user, operation='Add')
+        # Get or create the Media instance
+        media = Media.objects.filter(name=media_name, typeOfMedia=media_type).first()
+        if not media:
+            media = Media.objects.create(name=media_name, typeOfMedia=media_type)
+
+        # Create a new character instance directly
+        character = Character(
+            name=original_data.get('name'),
+            age=original_data.get('age'),
+            typeOfCharacter=original_data.get('typeOfCharacter'),
+            backstory=original_data.get('backstory'),
+            image=original_data.get('image'),
+            media=media,
+            user=user,
+        )
+        
+        try:
+            character.save()
+            return Response(CharacterSerializer(character).data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
     def update(self, request, pk=None):
-        # Find the character by name
-        character = next((char for char in mock_characters if char.name == pk), None)
+        character = get_object_or_404(Character, name=pk)
+        serializer = CharacterSerializer(character, data=request.data, partial=True)
+        username = request.query_params.get('user')
+        user = getUser(username)
+        if user:
+            LogTable.objects.create(user=user, operation='Update')
+        if serializer.is_valid():
+            character = serializer.save()
+            return Response(CharacterSerializer(character).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if not character:
-            return Response({"detail": "Character not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Create a copy of the request data
-        data = request.data.copy()
-        
-        # Perform the update directly on the character object
-        if 'name' in data and data['name'] != character.name:
-            # Only check for duplicates if name is changing
-            name_exists = any(char.name == data['name'] for char in mock_characters if char != character)
-            if name_exists:
-                return Response({"name": ["Character with this name already exists."]}, 
-                            status=status.HTTP_400_BAD_REQUEST)
-        
-        # Update the character attributes directly
-        if 'age' in data:
-            character.age = int(data['age'])
-        if 'mediaOfOrigin' in data:
-            character.mediaOfOrigin = data['mediaOfOrigin']
-        if 'typeOfMedia' in data:
-            character.typeOfMedia = data['typeOfMedia']
-        if 'typeOfCharacter' in data:
-            character.typeOfCharacter = data['typeOfCharacter']
-        if 'backstory' in data:
-            character.backstory = data['backstory']
-        if 'image' in data and data['image'] != 'nothing':
-            character.image = data['image']
-        
-        # Return the updated character
-        serializer = CharacterSerializer(character)
-        return Response(serializer.data)
 
 
     # Delete character
     def destroy(self, request, pk=None):
-        character = next((char for char in mock_characters if char.name == pk), None)
-        if not character:
-            return Response({"detail": "Character not found."}, status=status.HTTP_404_NOT_FOUND)
+        character = get_object_or_404(Character, name=pk)
+        character.delete()
+        username = request.query_params.get('user')
+        user = getUser(username)
+        LogTable.objects.create(user=user, operation='Delete')
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-        # Remove character from the mock list
-        mock_characters.remove(character)
-
-        return Response({"detail": "Character deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
     
 class VideoListCreateView(generics.ListCreateAPIView):
     queryset = Video.objects.all()
@@ -193,3 +198,58 @@ class VideoDownloadView(generics.RetrieveAPIView):
         response = FileResponse(open(file_path, 'rb'), content_type=content_type)
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
+    
+class LoginView(APIView):
+    users = User.objects.all()
+
+    def post(self, request):
+        login_username = request.data.get('username')
+        login_password = request.data.get('password')
+
+        user = User.objects.filter(username=login_username, password=login_password).first()
+
+        if not user:
+            return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        return Response({
+            "message": "Login successful.",
+            "user": user.username,
+            "isAdmin": user.is_admin
+        }, status=status.HTTP_200_OK)
+
+
+
+class RegisterView(APIView):
+    users = User.objects.all()
+
+    def post(self, request):
+        register_username = request.data.get('username')
+        register_password = request.data.get('password')
+
+        if not register_username or not register_password:
+            return Response({"error": "Username and password are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(username=register_username).exists():
+            return Response({"error": "Username already exists."}, status=status.HTTP_409_CONFLICT)
+
+        user = User.objects.create(username=register_username, password=register_password, is_admin=False)
+        return Response({"message": "User registered successfully."}, status=status.HTTP_201_CREATED)
+    
+class LogPagination(PageNumberPagination):
+    page_size = 10
+
+class LogTableView(ListAPIView):
+    queryset = LogTable.objects.select_related('user').order_by('-timestamp')
+    serializer_class = LogTableSerializer
+    pagination_class = LogPagination
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+class MonitorPagination(PageNumberPagination):
+    page_size = 10
+
+class MonitorTableView(ListAPIView):
+    queryset = MonitoredUsers.objects.select_related('user')
+    serializer_class = MonitoredUsersSerializer
+    pagination_class = MonitorPagination
+    permission_classes = [IsAuthenticatedOrReadOnly]
+

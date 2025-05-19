@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Character, useCharacters } from "../types/character";
+import { User, useUser } from "../types/user"
 import CharacterDialogue from "./deleteDialogue/page";
 import UpdateDialogue from "./UpdateDialogue/page";
 import filterAndSortCharacters from "./utils/filterSort";
+import { useRouter } from "next/navigation";
 import { debug } from "console";
 
 export default function Home() {
@@ -20,6 +22,9 @@ export default function Home() {
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
   const [userIsOnline, setUserIsOnline] = useState(navigator.onLine);
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const { getIsLogged, getUsername } = useUser();
+
+  useAuthRedirect(); // Check auth every second
 
   // Combined value
   const [isOnline, setIsOnline] = useState<boolean>(userIsOnline && serverOnline === true);
@@ -27,7 +32,7 @@ export default function Home() {
   const checkOnlineStatus = async () => {
     setUserIsOnline(navigator.onLine);
     try {
-      const res = await fetch("http://localhost:8000/api/characters/");
+      const res = await fetch(`http://localhost:8000/api/characters/?user=${getUsername()}`);
       setServerOnline(res.ok);
     } catch {
       setServerOnline(false);
@@ -48,7 +53,7 @@ export default function Home() {
 
 
   useEffect(() => {
-    let socket = new WebSocket("ws://localhost:8000/ws/characters/");
+    let socket = new WebSocket(`ws://localhost:8000/ws/characters/?user=${getUsername()}`);
   
     socket.onopen = () => {
       console.log("WebSocket connected");
@@ -74,7 +79,7 @@ export default function Home() {
     socket.onclose = () => {
       console.log("WebSocket connection closed, attempting to reconnect...");
       setTimeout(() => {
-        socket = new WebSocket("ws://localhost:8000/ws/characters/");  // Reconnecting
+        socket = new WebSocket(`ws://localhost:8000/ws/characters/?user=${getUsername()}`);  // Reconnecting
       }, 1000);  // Try to reconnect after 1 second
     };
   
@@ -91,33 +96,52 @@ export default function Home() {
   const charactersPerPage = 4;
   console.log
 
+  // The corrected fetchCharacters function with proper URL formatting
   const fetchCharacters = async () => {
     checkOnlineStatus()
     const onlineStatus = userIsOnline && serverOnline;
     if (onlineStatus) {
       try {
-        const filterParam = filter ? `typeOfMedia=${filter}&` : '';
-        const sortByParam = sortBy ? `ordering=${sortBy}` : 'ordering=name';
-        const orderParam = sortOrder ? `&order=${sortOrder}` : '';
-
-        const url = `http://localhost:8000/api/characters/?${filterParam}${sortByParam}${orderParam}`;
-        const response = await fetch(url);
+        // Correctly build URL with query parameters
+        const url = new URL('http://localhost:8000/api/characters/');
+        
+        // Add query parameters properly
+        if (filter) {
+          url.searchParams.append('typeOfMedia', filter);
+        }
+        
+        if (sortBy) {
+          url.searchParams.append('ordering', sortBy);
+        }
+        
+        if (sortOrder) {
+          url.searchParams.append('order', sortOrder);
+        }
+        
+        const user = getUsername();
+        if (user) {
+          url.searchParams.append('user', user);
+        }
+        
+        const response = await fetch(url.toString());
         if (response.ok) {
           const data = await response.json();
+          console.log("A")
+          console.log(data)
+          console.log("B")
           setCharacters(data);
           getFromBackend(data);
         } else {
-          console.error("Error fetching characters:", response.statusText);
+          console.error("Error fetching characters1:", response.statusText);
         }
       } catch (error) {
-        console.error("Error fetching characters:", error);
+        console.error("Error fetching characters2:", error);
       }
     } else {
       setCharacters(contextCharacters);
       console.log(characters)
     }
   };
-
   // Fetch characters from the backend when component mounts or filter/sort changes
   useEffect(() => {
 
@@ -165,7 +189,7 @@ const handleUpdateCharacter = async (updatedCharacter: any) => {
     {
       try {
         // Send update request to backend
-        await fetch(`http://localhost:8000/api/characters/${updatedCharacter.name}`, {
+        await fetch(`http://localhost:8000/api/characters/${updatedCharacter.name}/?user=${getUsername()}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -194,6 +218,21 @@ const handleUpdateCharacter = async (updatedCharacter: any) => {
   }
 };
 
+// Checks if its still logged in
+function useAuthRedirect() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!getIsLogged()) {
+        router.push("/");
+      }
+    }, 1000); // check every 1 second
+
+    return () => clearInterval(interval); // cleanup
+  }, [router]);
+}
+
 // Handle delete action
 const handleDeleteCharacter = async () => {
   if (selectedCharacterName) {
@@ -203,7 +242,7 @@ const handleDeleteCharacter = async () => {
     {
       try {
         // Send delete request to backend
-        await fetch(`http://localhost:8000/api/characters/${selectedCharacterName}/`, {
+        await fetch(`http://localhost:8000/api/characters/${selectedCharacterName}/?user=${getUsername()}`, {
           method: 'DELETE',
         });
 
@@ -254,7 +293,7 @@ return (
               <img src={char.image} alt={char.name} />
               <div className="CharacterDetails">
                 <h2>{char.name}</h2>
-                <p><strong>Media of Origin:</strong> {char.mediaOfOrigin}</p>
+                <p><strong>Media of Origin:</strong> {char.media.name}</p>
                 <p><strong>Age:</strong> {char.age}</p>
                 <p><strong>Type:</strong> {char.typeOfCharacter}</p>
                 <p>{char.backstory}</p>

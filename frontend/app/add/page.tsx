@@ -1,6 +1,7 @@
 "use client";
 import React,{ useEffect, useState } from "react";
 import { useCharacters, Character } from "../types/character";
+import { useUser, User } from "../types/user";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
@@ -20,6 +21,7 @@ export default function Home() {
   const [image, setImage] = useState("");
   const [dialogueOpen, setDialogueOpen] = useState(false);
   const [wasSuccessful, setWasSuccessful] = useState(false);
+  const { getUsername } = useUser();
 
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
     const [userIsOnline, setUserIsOnline] = useState(navigator.onLine);
@@ -82,7 +84,8 @@ export default function Home() {
 
   const handleSubmit = async () => {
     const onlineStatus = userIsOnline && serverOnline;
-    if(onlineStatus)
+    const user = getUsername();
+    if(onlineStatus && user)
     {
 
       const formData = new FormData();
@@ -93,6 +96,7 @@ export default function Home() {
       formData.append("typeOfCharacter", characterType);
       formData.append("backstory", backstory);
       formData.append("image", "images/" + image);
+      formData.append("user", user);
       
       /*
       const imageInput = document.getElementById("image") as HTMLInputElement | null;
@@ -108,7 +112,17 @@ export default function Home() {
       });
       
       if (!response.ok) {
-        const errors = await response.json();
+        let errorText = await response.text();
+        let errors: any = {};
+
+        try {
+          errors = JSON.parse(errorText);
+        } catch (e) {
+          console.error("Non-JSON response:", errorText);
+          alert("Server error: " + errorText);
+        }
+
+
         
         // Clear previous errors
         setNameError("");
@@ -156,6 +170,47 @@ export default function Home() {
     }
     
   };
+
+  const simulateAttack = async () => {
+  const user = getUsername();
+  if (!user) {
+    alert("You must be logged in to simulate the attack.");
+    return;
+  }
+
+  for (let i = 0; i < 30; i++) {
+    const randomNum = Math.floor(Math.random() * 10000);
+    const name = `Attack_${i}_${randomNum}`;
+
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("mediaOfOrigin", "AttackSim");
+    formData.append("age", "999");
+    formData.append("typeOfMedia", "Video Game");
+    formData.append("typeOfCharacter", "Antagonist");
+    formData.append("backstory", "Simulated attack character.");
+    formData.append("image", "images/placeholder.png"); // Replace with real image path if needed
+    formData.append("user", user);
+
+    try {
+      const res = await fetch("http://localhost:8000/api/characters/", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        console.warn(`Failed to create character ${name}`);
+      }
+    } catch (err) {
+      console.error("Request error:", err);
+    }
+
+    await new Promise((r) => setTimeout(r, 100)); // small delay between requests
+  }
+
+  alert("Simulated attack complete.");
+};
+
   
   
   return (
@@ -249,6 +304,9 @@ export default function Home() {
       </div>
   
       <button className="ConfirmButton" onClick={handleSubmit}>Confirm</button>
+      <button onClick={simulateAttack} style={{ marginTop: "1rem", padding: "0.5rem", backgroundColor: "red", color: "white" }}>
+        Simulate Attack
+      </button>
   
       {dialogueOpen && (
         <div className="dialogue">

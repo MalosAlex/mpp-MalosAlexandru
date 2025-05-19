@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/app/main/navbar";
 import Sidebar from "@/app/main/sidebar";
 import { CharacterProvider } from "@/app/types/character"
+import { UserProvider } from "./types/user";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,27 +24,29 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <CharacterProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body className="h-screen overflow-hidden">
-          <div className="flex h-screen">
-            {/* Sidebar should stay fixed */}
-            <Sidebar />
+      <UserProvider>
+        <html lang="en" suppressHydrationWarning>
+          <body className="h-screen overflow-hidden">
+            <div className="flex h-screen">
+              {/* Sidebar should stay fixed */}
+              <Sidebar />
 
-            {/* Main content area */}
-            <div className="flex-1 flex flex-col">
-              <Navbar />
+              {/* Main content area */}
+              <div className="flex-1 flex flex-col">
+                <Navbar />
 
-              {/* Scrollable content */}
-              <main className="flex-1 overflow-auto p-6">
-                <h1 className="text-2xl font-bold mb-4">Fictional Characters</h1>
-                <div className="bg-gray-100 p-4 rounded-lg shadow-md min-h-[80vh] flex flex-col gap-2">
-                    {children}
-                </div>
-              </main>
+                {/* Scrollable content */}
+                <main className="flex-1 overflow-auto p-6">
+                  <h1 className="text-2xl font-bold mb-4">Fictional Characters</h1>
+                  <div className="bg-gray-100 p-4 rounded-lg shadow-md min-h-[80vh] flex flex-col gap-2">
+                      {children}
+                  </div>
+                </main>
+              </div>
             </div>
-          </div>
-        </body>
-      </html>
+          </body>
+        </html>
+      </UserProvider>
     </CharacterProvider>
   );
 }

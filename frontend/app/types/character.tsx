@@ -4,13 +4,17 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 
 export type Character = {
   name: string;
-  mediaOfOrigin: string;
+  media: {
+    id: number;
+    name: string;
+    typeOfMedia: string;
+  };
   age: number;
-  typeOfMedia: string;
   typeOfCharacter: string;
   backstory: string;
   image: string;
 };
+
 
 type CharacterContextType = {
   characters: Character[];
@@ -66,6 +70,8 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
 
   const sync = async () => {
     // Sync the added characters
+    console.log(addedCharacters)
+    console.log("helo")
     for (const character of addedCharacters) {
       try {
         // Get all characters first to check existence
@@ -89,9 +95,9 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
         // Now proceed with creating the character
         const formData = new FormData();
         formData.append("name", character.name);
-        formData.append("mediaOfOrigin", character.mediaOfOrigin);
+        formData.append("mediaOfOrigin", character.media.name);
         formData.append("age", String(character.age));
-        formData.append("typeOfMedia", character.typeOfMedia);
+        formData.append("typeOfMedia", character.media.typeOfMedia);
         formData.append("typeOfCharacter", character.typeOfCharacter);
         formData.append("backstory", character.backstory);
         formData.append("image", character.image);
