@@ -103,7 +103,9 @@ export default function Home() {
     if (onlineStatus) {
       try {
         // Correctly build URL with query parameters
-        const url = new URL('${process.env.REACT_APP_API_BASE_URL}/api/characters/');
+        const url = new URL(`${process.env.REACT_APP_API_BASE_URL}/api/characters/`);
+        console.log("API base URL:", process.env.REACT_APP_API_BASE_URL);
+
         
         // Add query parameters properly
         if (filter) {
