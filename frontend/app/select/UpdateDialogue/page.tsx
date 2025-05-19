@@ -28,7 +28,7 @@ const UpdateDialogue = ({ character, onConfirm, onClose, onError }: UpdateDialog
       const checkOnlineStatus = async () => {
         setUserIsOnline(navigator.onLine);
         try {
-          const res = await fetch("http://localhost:8000/api/characters/");
+          const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/`);
           setServerOnline(res.ok);
         } catch {
           setServerOnline(false);
@@ -92,7 +92,7 @@ const UpdateDialogue = ({ character, onConfirm, onClose, onError }: UpdateDialog
       
       // Send to Django API endpoint - adjust URL to match your backend structure
       // Using the original character name as the identifier based on your viewset
-      const response = await fetch(`http://localhost:8000/api/characters/${encodeURIComponent(character.name)}/`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/${encodeURIComponent(character.name)}/`, {
         method: "PUT", // Or PATCH if you're doing partial updates
         body: formData,
       });

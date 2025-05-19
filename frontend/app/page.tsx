@@ -18,7 +18,7 @@ export default function Home() {
   
     const endpoint = isLogin ? "/api/login/" : "/api/register/";
     try {
-      const res = await fetch(`http://localhost:8000${endpoint}`, {
+      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

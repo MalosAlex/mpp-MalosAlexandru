@@ -18,7 +18,7 @@ export default function AgeChart() {
         const checkOnlineStatus = async () => {
           setUserIsOnline(navigator.onLine);
           try {
-            const res = await fetch("http://localhost:8000/api/characters/");
+            const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/`);
             setServerOnline(res.ok);
           } catch {
             setServerOnline(false);
@@ -37,7 +37,7 @@ export default function AgeChart() {
                 if(onlineStatus)
                 {
                 try {
-                  const url = `http://localhost:8000/api/characters/`;
+                  const url = `${process.env.REACT_APP_API_BASE_URL}/api/characters/`;
                   console.log(url); // For debugging the URL
           
                   const response = await fetch(url);

@@ -13,7 +13,7 @@ export default function MonitoredPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/monitored?page=${page}`);
+      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/monitored?page=${page}`);
       const data = await res.json();
       console.log(data)
 

@@ -12,7 +12,7 @@ export default function Navbar() {
   const checkOnlineStatus = async () => {
     setUserIsOnline(navigator.onLine);
     try {
-      const res = await fetch("http://localhost:8000/api/characters/");
+      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/`);
       setServerOnline(res.ok);
     } catch {
       setServerOnline(false);

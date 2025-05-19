@@ -75,7 +75,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     for (const character of addedCharacters) {
       try {
         // Get all characters first to check existence
-        const allCharsResponse = await fetch(`http://localhost:8000/api/characters/`);
+        const allCharsResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/`);
         const allCharacters = await allCharsResponse.json();
         console.log("All characters:", allCharacters);
         console.log("All added before:", addedCharacters);
@@ -121,7 +121,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
           }
         }*/
         
-        const response = await fetch("http://localhost:8000/api/characters/", {
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/`, {
           method: "POST",
           body: formData,
         });
@@ -143,7 +143,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     for (const updatedCharacter of updatedCharacters) {
       console.log("helobaby")
       try {
-        const response = await fetch(`http://localhost:8000/api/characters/${updatedCharacter.name}/`, {
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/${updatedCharacter.name}/`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -162,7 +162,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     // Sync the deleted characters
     for (const name of deletedCharacters) {
       try {
-        const response = await fetch(`http://localhost:8000/api/characters/${name}/`, {
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/${name}/`, {
           method: 'DELETE',
         });
   
