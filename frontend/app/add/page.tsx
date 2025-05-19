@@ -32,7 +32,11 @@ export default function Home() {
     const checkOnlineStatus = async () => {
       setUserIsOnline(navigator.onLine);
       try {
-        const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/`);
+        console.log("API base URL:", process.env.REACT_APP_API_BASE_URL);
+        console.log(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/characters/`);
+        console.log('FADSAD')
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/characters/`);
+
         setServerOnline(res.ok);
       } catch {
         setServerOnline(false);
@@ -106,7 +110,7 @@ export default function Home() {
 
       
       
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/characters/`, {
         method: "POST",
         body: formData,
       });
@@ -193,7 +197,7 @@ export default function Home() {
     formData.append("user", user);
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/characters/`, {
         method: "POST",
         body: formData,
       });

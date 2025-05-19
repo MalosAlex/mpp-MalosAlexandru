@@ -13,12 +13,17 @@ export default function Home() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  console.log("API base URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
+  console.log("HELOOO");
+  console.log(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/characters/`);
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
   
     const endpoint = isLogin ? "/api/login/" : "/api/register/";
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}${endpoint}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -20,7 +20,7 @@ export default function Videos() {
   const fetchVideos = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/videos/`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/videos/`);
       const data = await response.json();
       setVideos(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -39,7 +39,7 @@ export default function Videos() {
     formData.append("file", selectedFile);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/videos/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/videos/`, {
         method: "POST",
         body: formData,
       });
@@ -62,7 +62,7 @@ export default function Videos() {
 
   const handleDeleteVideo = async (videoId: number) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/videos/${videoId}/`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/videos/${videoId}/`, {
         method: "DELETE",
       });
       
@@ -81,7 +81,7 @@ export default function Videos() {
 
   const handleDownload = (videoId: number, videoTitle: string) => {
     // Using the download endpoint
-    window.location.href = `${process.env.REACT_APP_API_BASE_URL}/api/videos/${videoId}/download/`;
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/videos/${videoId}/download/`;
   };
 
   if (isLoading) {

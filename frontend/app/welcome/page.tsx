@@ -6,7 +6,7 @@ export default function Home() {
 
   // getting the message from the backend
   /*useEffect(() => {
-    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/hello/`)  // Call Django API
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/hello/`)  // Call Django API
       .then((res) => res.json())
       .then((data) => setMessage(data.message))
       .catch((err) => setMessage("Failed to fetch data"));

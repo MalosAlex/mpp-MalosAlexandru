@@ -15,7 +15,7 @@ export default function Page() {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/log?page=${page}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/log?page=${page}`);
       const data = await res.json();
 
       // Ensure that data.results exists and is an array

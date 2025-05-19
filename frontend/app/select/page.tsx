@@ -32,7 +32,7 @@ export default function Home() {
   const checkOnlineStatus = async () => {
     setUserIsOnline(navigator.onLine);
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/?user=${getUsername()}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/characters/?user=${getUsername()}`);
       setServerOnline(res.ok);
     } catch {
       setServerOnline(false);
@@ -53,7 +53,7 @@ export default function Home() {
 
 
   useEffect(() => {
-    let socket = new WebSocket(`${process.env.REACT_APP_WS_BASE_URL}/ws/characters/?user=${getUsername()}`);
+    let socket = new WebSocket(`${process.env.NEXT_PUBLIC_WS_BASE_URL}/ws/characters/?user=${getUsername()}`);
   
     socket.onopen = () => {
       console.log("WebSocket connected");
@@ -79,7 +79,7 @@ export default function Home() {
     socket.onclose = () => {
       console.log("WebSocket connection closed, attempting to reconnect...");
       setTimeout(() => {
-        socket = new WebSocket(`${process.env.REACT_APP_WS_BASE_URL}/ws/characters/?user=${getUsername()}`);  // Reconnecting
+        socket = new WebSocket(`${process.env.NEXT_PUBLIC_WS_BASE_URL}/ws/characters/?user=${getUsername()}`);  // Reconnecting
       }, 1000);  // Try to reconnect after 1 second
     };
   
@@ -103,8 +103,8 @@ export default function Home() {
     if (onlineStatus) {
       try {
         // Correctly build URL with query parameters
-        const url = new URL(`${process.env.REACT_APP_API_BASE_URL}/api/characters/`);
-        console.log("API base URL:", process.env.REACT_APP_API_BASE_URL);
+        const url = new URL(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/characters/`);
+        console.log("API base URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
 
         
         // Add query parameters properly
@@ -191,7 +191,7 @@ const handleUpdateCharacter = async (updatedCharacter: any) => {
     {
       try {
         // Send update request to backend
-        await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/${updatedCharacter.name}/?user=${getUsername()}`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/characters/${updatedCharacter.name}/?user=${getUsername()}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -244,7 +244,7 @@ const handleDeleteCharacter = async () => {
     {
       try {
         // Send delete request to backend
-        await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/characters/${selectedCharacterName}/?user=${getUsername()}`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/characters/${selectedCharacterName}/?user=${getUsername()}`, {
           method: 'DELETE',
         });
 

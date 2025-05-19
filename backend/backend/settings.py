@@ -103,8 +103,16 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mpp_rzu5',  # your database name
+        'USER': 'mpp_rzu5_user',
+        'PASSWORD': 'J0U1OZMDfPRP7huSoIrCGapyjT3vy4UR',
+        'HOST': 'dpg-d0ll0ube5dus73cmft6g-a',
+        'PORT': '5432',  # typically 5432 for PostgreSQL
+    }
 }
+
 
 
 # Password validation
