@@ -33,7 +33,7 @@ DEBUG = False
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-ALLOWED_HOSTS = ['mpp-backend.onrender.com', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['mpp-malosalexandru-1.onrender.com', '127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -74,7 +74,11 @@ CHANNEL_LAYERS = {
 }
 
 ASGI_APPLICATION = 'backend.asgi.application'
-CORS_ALLOW_ALL_ORIGINS = True 
+
+CORS_ALLOWED_ORIGINS = [
+    "https://mpp-malosalexandru-1.onrender.com",
+    "http://localhost:3000"
+]
 
 ROOT_URLCONF = 'backend.urls'
 APPEND_SLASH = False
